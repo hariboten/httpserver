@@ -30,11 +30,14 @@ public class EchoServer {
 			try {
 				BufferedReader reader = new BufferedReader(
 						new InputStreamReader(
-							accepted.getInputStream()))
+							accepted.getInputStream()));
 				OutputStream out = accepted.getOutputStream();
-				byte[] buf = new byte[4096];
-				int len = in.read(buf);
-				out.write(buf, 0, len);
+				reader.lines().forEach(line -> {
+					System.out.println(line);
+				};
+				//byte[] buf = new byte[4096];
+				//int len = in.read(buf);
+				//out.write(buf, 0, len);
 
 			} finally {
 				accepted.close();
