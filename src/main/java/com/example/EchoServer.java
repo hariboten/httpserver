@@ -1,10 +1,10 @@
 package com.example;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.InetSocketAddress;
@@ -31,10 +31,20 @@ public class EchoServer {
 				BufferedReader reader = new BufferedReader(
 						new InputStreamReader(
 							accepted.getInputStream()));
-				OutputStream out = accepted.getOutputStream();
+				
+				BufferedWriter writer = new BufferedWriter(
+						new OutputStreamWriter(
+							accepted.getOutputStream()));
 				reader.lines().forEach(line -> {
+					try {
+						writer.write(line, 0, line.length());
+					} catch (IOException e){
+						System.err.println("IOException write error");
+					}
 					System.out.println(line);
-				};
+				});
+				reader.close();
+				writer.close();
 				//byte[] buf = new byte[4096];
 				//int len = in.read(buf);
 				//out.write(buf, 0, len);
