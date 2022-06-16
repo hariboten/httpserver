@@ -19,13 +19,22 @@ import java.io.BufferedInputStream;
 public class EchoServer {
 	private final int portNumber;
 	private static final String PATH = "./www/index.html";
-	private static final int BUFF_SIZE = 1024;
+	private static final int BUFF_SIZE = 4096;
 
 	public EchoServer() {
 		this.portNumber = 8080;
 	}
 	public EchoServer(int portNumber) {
 		this.portNumber = portNumber;
+	}
+
+	private void send_file(BufferedInputStream in, BufferedOutputStream out) throws IOException{
+				byte[] buff = new byte[BUFF_SIZE];
+				int readBytes;
+				while ((readBytes = in.read(buff)) != -1) {
+					out.write(buff, 0, readBytes);
+				}
+				out.flush();
 	}
 
 	private void task(Socket soc) {
@@ -37,17 +46,22 @@ public class EchoServer {
 							soc.getOutputStream(), true);
 							*/
 
-				BufferedOutputStream out = new BufferedOutputStream(soc.getOutputStream());
+				String line = reader.readLine();
+				System.out.println(line);
+				if (line.equals("GET")) {
+					BufferedOutputStream out = new BufferedOutputStream(soc.getOutputStream());
+					BufferedInputStream in = new BufferedInputStream(new FileInputStream(PATH));
 
-				byte[] buff = new byte[BUFF_SIZE];
-				BufferedInputStream in = new BufferedInputStream(new FileInputStream(PATH));
-				int readBytes;
-				while ((readBytes = in.read(buff)) != -1) {
-					out.write(buff, 0, readBytes);
+					send_file(in, out);
+
+					out.close();
+					in.close();
+				} else {
+					PrintWriter writer = new PrintWriter(
+							soc.getOutputStream(), true);
+					writer.println("404");
+					writer.close();
 				}
-				out.flush();
-				out.close();
-				in.close();
 
 				/*
 				reader.lines().forEach(line -> {
