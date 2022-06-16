@@ -30,10 +30,21 @@ public class EchoServer {
 				PrintWriter writer = new PrintWriter(
 							soc.getOutputStream(), true);
 
+				RequestParser request = RequestParser.readRequest(reader);
+				if (request != null) {
+					writer.println("success");
+					System.out.println("success");
+				} else {
+					writer.println("failed");
+					System.out.println("failed");
+				}
+
+				/*
 				reader.lines().forEach(line -> {
 					writer.println(line);
 					System.out.println(line);
 				});
+				*/
 
 				reader.close();
 				writer.close();
