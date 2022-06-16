@@ -11,9 +11,15 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.InetSocketAddress;
 import java.util.stream.Stream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedInputStream;
 
 public class EchoServer {
 	private final int portNumber;
+	private static final String PATH = "./www/index.html";
+	private static final int BUFF_SIZE = 1024;
 
 	public EchoServer() {
 		this.portNumber = 8080;
@@ -27,11 +33,21 @@ public class EchoServer {
 				BufferedReader reader = new BufferedReader(
 						new InputStreamReader(
 							soc.getInputStream(), StandardCharsets.UTF_8));
-				PrintWriter writer = new PrintWriter(
+				/* PrintWriter writer = new PrintWriter(
 							soc.getOutputStream(), true);
+							*/
 
-				writer.println("Hello, World!");
-				System.out.println("Hello, World!");
+				BufferedOutputStream out = new BufferedOutputStream(soc.getOutputStream());
+
+				byte[] buff = new byte[BUFF_SIZE];
+				BufferedInputStream in = new BufferedInputStream(new FileInputStream(PATH));
+				int readBytes;
+				while ((readBytes = in.read(buff)) != -1) {
+					out.write(buff, 0, readBytes);
+				}
+				out.flush();
+				out.close();
+				in.close();
 
 				/*
 				reader.lines().forEach(line -> {
@@ -41,7 +57,7 @@ public class EchoServer {
 				*/
 
 				reader.close();
-				writer.close();
+				//writer.close();
 			} catch (IOException ignore) {
 			}finally {
 				try {
