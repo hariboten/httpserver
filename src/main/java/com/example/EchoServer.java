@@ -30,10 +30,15 @@ public class EchoServer {
 				PrintWriter writer = new PrintWriter(
 							soc.getOutputStream(), true);
 
+				writer.println("Hello, World!");
+				System.out.println("Hello, World!");
+
+				/*
 				reader.lines().forEach(line -> {
 					writer.println(line);
 					System.out.println(line);
 				});
+				*/
 
 				reader.close();
 				writer.close();

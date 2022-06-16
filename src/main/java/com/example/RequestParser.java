@@ -17,26 +17,28 @@ public class RequestParser {
 		this.method = method;
 		this.path = path;
 		this.version = version;
+		this.headers = new HashMap<String, String>();
 	}
 
-	public RequestParser readRequest(BufferedReader reader) {
+	public static RequestParser readRequest(BufferedReader reader) {
 		try {
 			RequestParser request = parse_method_and_version(reader.readLine());
 			reader.lines()
 				.takeWhile(s -> {return (s != "");})
 				.map(s -> parse_header(s))
 				.forEach((pair) -> {
-					this.headers.put(pair.left, pair.right);
+					request.headers.put(pair.left, pair.right);
 				});
-			/* if (!headers.containsKey(HOST_HEADER)) {
+			if (!request.headers.containsKey(HOST_HEADER)) {
+				return null;
 			}
-			*/
 			return request;
 		} catch (IOException e) {
+			return null;
 		}
 	}
 
-	private RequestParser parse_method_and_version(String req) {
+	private static RequestParser parse_method_and_version(String req) {
 		String[] splitted = req.split(" ", 3);
 		/*if (splitted.length != 3) {
 		}
@@ -44,7 +46,7 @@ public class RequestParser {
 		return new RequestParser(splitted[0], splitted[1], splitted[2]);
 	}
 
-	private Pair<String, String> parse_header(String line) {
+	private static Pair<String, String> parse_header(String line) {
 		String[] splitted = line.split(":", 2);
 		/*if (splitted.length != 2) {
 		}
