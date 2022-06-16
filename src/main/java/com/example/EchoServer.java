@@ -2,12 +2,15 @@ package com.example;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+//import java.io.OutputStreamWriter;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
+//import java.io.BufferedWriter;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.InetSocketAddress;
+import java.util.stream.Stream;
 
 public class EchoServer {
 	private final int portNumber;
@@ -19,6 +22,30 @@ public class EchoServer {
 		this.portNumber = portNumber;
 	}
 
+	private void task(Socket soc) {
+			try {
+				BufferedReader reader = new BufferedReader(
+						new InputStreamReader(
+							soc.getInputStream(), StandardCharsets.UTF_8));
+				PrintWriter writer = new PrintWriter(
+							soc.getOutputStream(), true);
+
+				reader.lines().forEach(line -> {
+					writer.println(line);
+					System.out.println(line);
+				});
+
+				reader.close();
+				writer.close();
+			} catch (IOException ignore) {
+			}finally {
+				try {
+					soc.close();
+				} catch (IOException ignore) {
+				}
+			}
+	}
+
 	public void start() throws IOException {
 		System.out.println("start echo server: port = " + this.portNumber);
 
@@ -27,31 +54,13 @@ public class EchoServer {
 
 		while (true) {
 			Socket accepted = socket.accept();
-			try {
-				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(
-							accepted.getInputStream()));
-				
-				BufferedWriter writer = new BufferedWriter(
-						new OutputStreamWriter(
-							accepted.getOutputStream()));
-				reader.lines().forEach(line -> {
-					try {
-						writer.write(line, 0, line.length());
-					} catch (IOException e){
-						System.err.println("IOException write error");
-					}
-					System.out.println(line);
-				});
-				reader.close();
-				writer.close();
-				//byte[] buf = new byte[4096];
-				//int len = in.read(buf);
-				//out.write(buf, 0, len);
 
-			} finally {
-				accepted.close();
-			}
+			new Thread() {
+				@Override
+				public void run() {
+					task(accepted);
+				}
+			}.start();
 		}
 	}
 }
