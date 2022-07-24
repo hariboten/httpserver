@@ -109,5 +109,9 @@ class HttpServerTest {
 		assertEquals("", file.getName());
 		File index = new File("/index.html");
 		assertEquals("index.html", index.getName());
+		File parentpath = new File("../../../secret");
+		assertEquals("secret", parentpath.getName());
+		File endWithSlash = new File("/index.html/");
+		assertEquals("index.html", endWithSlash.getName());
 	}
 }

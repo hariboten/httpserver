@@ -1,12 +1,12 @@
 package hariboten;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 class DiskFileLoader implements FileLoader {
 	private String documentRoot;
-	private static final String ROOT = "/";
 
 	public DiskFileLoader(String documentRoot) {
 		this.documentRoot = documentRoot;
@@ -14,9 +14,10 @@ class DiskFileLoader implements FileLoader {
 
     @Override
 	public InputStream open(String path) throws FileNotFoundException {
-		if (path.equals(ROOT)) {
-			path = "/index.html";
+		String filename = new File(path).getName();
+		if (filename.equals("")) {
+			filename = "index.html";
 		}
-		return new FileInputStream(documentRoot + path);
+		return new FileInputStream(documentRoot + "/" + filename);
 	}
 }
