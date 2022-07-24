@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -17,7 +19,7 @@ class HttpServerTest {
 
 		""";
 	private static final String REQUEST_ANOTHER = """
-		GET /another http/1.1
+		GET /another.html http/1.1
 		host: localhost
 
 		""";
@@ -48,14 +50,17 @@ class HttpServerTest {
 	class StubFileLoader implements FileLoader{
 
 		@Override
-		public InputStream open(String path) {
+		public InputStream open(String path) throws FileNotFoundException{
 			if (path.equals("/")) {
 				return new ByteArrayInputStream(INDEX_HTML.getBytes());
 			}
-			if (path.equals("/another")) {
+			if (path.equals("/index.html")) {
+				return new ByteArrayInputStream(INDEX_HTML.getBytes());
+			}
+			if (path.equals("/another.html")) {
 				return new ByteArrayInputStream(ANOTHER_HTML.getBytes());
 			}
-			throw new RuntimeException(new IllegalArgumentException());
+			throw new FileNotFoundException();
 		}
 	}
 
@@ -96,5 +101,13 @@ class HttpServerTest {
 		webserver.run();
 
 		assertEquals(EXPECT_ROOT, out.toString());
+	}
+
+	@Test
+	public void testLearnFile() {
+		File file = new File("/");
+		assertEquals("", file.getName());
+		File index = new File("/index.html");
+		assertEquals("index.html", index.getName());
 	}
 }
