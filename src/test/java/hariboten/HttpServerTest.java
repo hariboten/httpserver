@@ -31,8 +31,6 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpClient.Version;
 import java.net.http.HttpResponse.BodyHandlers;
 
-import javax.management.RuntimeErrorException;
-
 class HttpServerTest {
 	private static final String REQUEST_ROOT = """
 			GET / HTTP/1.1
@@ -209,6 +207,7 @@ class HttpServerTest {
 			assertEquals(anoterResponse.body(), ANOTHER_HTML);
 		}
 
+		@Disabled
 		@Test
 		public void testKeepAlive() {
 			try (Socket socket = new Socket("localhost", 8080);

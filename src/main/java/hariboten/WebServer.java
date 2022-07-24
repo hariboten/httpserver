@@ -18,27 +18,30 @@ public class WebServer implements Runnable {
 		this.fileLoader = fileLoader;
     }
 
+	private InputStream createHeader() {
+		return new ByteArrayInputStream(
+				(STATUS_LINE_200 + "\n" + "Content-Type: text/html; charset=utf-8" + "\n\n")
+				.getBytes());
+	}
+
+	private void send(InputStream header, InputStream body) throws IOException {
+			header.transferTo(out);
+			body.transferTo(out);
+	}
 
     @Override
 	public void run() {
-		RequestReciever requestReciever = new RequestReciever(in);
-		String path = null;
 		try {
-			path = requestReciever.recv();
-		} catch (IOException e) {
-			System.err.println(e);
-			return ;
-		}
+			RequestReciever requestReciever = new RequestReciever(in);
+			String path = requestReciever.recv();
 
-		try {
-			InputStream header = new ByteArrayInputStream(
-					(STATUS_LINE_200 + "\n" + "Content-Type: text/html; charset=utf-8" + "\n\n")
-					.getBytes());
+			InputStream header = createHeader();
 			InputStream body = fileLoader.open(path);
 
-			header.transferTo(out);
-			body.transferTo(out);
+			send(header, body);
+
 			out.close();
+			in.close();
 		} catch (IOException e) {
 			System.err.println(e);
 			return ;
