@@ -20,9 +20,12 @@ class RequestReciever {
 		}
 
 		String httpMethod = token[0];
+		String path = token[1];
+
 		if (!httpMethod.equals("GET")) {
 			throw new IOException("Do not accept execpt GET request yet.");
 		}
-        return statusLine.split(" ")[1];
+
+        return path;
     }
 }
