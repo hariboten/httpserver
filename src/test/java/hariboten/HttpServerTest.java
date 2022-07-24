@@ -36,6 +36,15 @@ class HttpServerTest {
 	}
 
 	@Test
+	public void testRecieveRequestPath() {
+		InputStream in = new ByteArrayInputStream(REQUEST_ROOT.getBytes());
+		RequestReciever reciever = new RequestReciever(in);
+		String path = reciever.recv();
+		String expected = "/";
+		assertEquals(expected, path);
+	}
+
+	@Test
 	public void testResponseFromFile() {
 		InputStream in = new ByteArrayInputStream(REQUEST_ROOT.getBytes());
 		OutputStream out = new ByteArrayOutputStream();
