@@ -5,12 +5,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import sun.tools.jar.resources.jar;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpClient.Version;
+import java.net.http.HttpResponse.BodyHandlers;
 
 class HttpServerTest {
 	private static final String REQUEST_ROOT = """
@@ -106,19 +114,6 @@ class HttpServerTest {
 	}
 
 	@Test
-	public void testDirectoryTraversal() {
-		InputStream in = new ByteArrayInputStream(REQUEST_ROOT.getBytes());
-		OutputStream out = new ByteArrayOutputStream();
-
-		FileLoader fileLoader = new DiskFileLoader(DOCUMENT_ROOT);
-		
-		Runnable webserver = new WebServer(in, out, fileLoader);
-		webserver.run();
-
-		assertEquals(EXPECT_ROOT, out.toString());
-	}
-
-	@Test
 	public void testLearnFile() {
 		File file = new File("/");
 		assertEquals("", file.getName());
@@ -128,5 +123,22 @@ class HttpServerTest {
 		assertEquals("secret", parentpath.getName());
 		File endWithSlash = new File("/index.html/");
 		assertEquals("index.html", endWithSlash.getName());
+	}
+
+	@Test
+	public void testOnTcp() {
+		HttpServer httpServer = new HttpServer();
+		Thread httpServerThread = new Thread(httpServer);
+		HttpRequest request = HttpRequest.newBuilder()
+			.uri(URI.create("localhost:8080/"))
+			.build();
+		HttpResponse<String> res = 
+			HttpClient.newBuilder()
+			.version(Version.HTTP_1_1)
+			.build()
+			.send(request, BodyHandlers.ofString());
+		assertEquals(res.statusCode(), 200);
+		assertEquals(res.body(), INDEX_HTML);
+
 	}
 }
