@@ -46,6 +46,8 @@ class HttpServerTest {
 	private static final String STATUS_LINE_200 = "http/1.1 200 OK";
 	private static final String EXPECT_ROOT = STATUS_LINE_200 + "\n\n" + INDEX_HTML;
 	private static final String EXPECT_ANOTHER = STATUS_LINE_200 + "\n\n" + ANOTHER_HTML;
+	private static final String DOCUMENT_ROOT = "/Users/pc220206/Documents/engineer_training/http/server/http_server/html/";
+
 
 	class StubFileLoader implements FileLoader{
 
@@ -95,7 +97,20 @@ class HttpServerTest {
 		InputStream in = new ByteArrayInputStream(REQUEST_ROOT.getBytes());
 		OutputStream out = new ByteArrayOutputStream();
 
-		FileLoader fileLoader = new DiskFileLoader("./html");
+		FileLoader fileLoader = new DiskFileLoader(DOCUMENT_ROOT);
+		
+		Runnable webserver = new WebServer(in, out, fileLoader);
+		webserver.run();
+
+		assertEquals(EXPECT_ROOT, out.toString());
+	}
+
+	@Test
+	public void testDirectoryTraversal() {
+		InputStream in = new ByteArrayInputStream(REQUEST_ROOT.getBytes());
+		OutputStream out = new ByteArrayOutputStream();
+
+		FileLoader fileLoader = new DiskFileLoader(DOCUMENT_ROOT);
 		
 		Runnable webserver = new WebServer(in, out, fileLoader);
 		webserver.run();
