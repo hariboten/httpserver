@@ -10,14 +10,20 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringReader;
 import java.io.UncheckedIOException;
+import java.net.Socket;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -29,46 +35,45 @@ import javax.management.RuntimeErrorException;
 
 class HttpServerTest {
 	private static final String REQUEST_ROOT = """
-		GET / HTTP/1.1
-		host: localhost
+			GET / HTTP/1.1
+			host: localhost
 
-		""";
+			""";
 	private static final String REQUEST_ANOTHER = """
-		GET /another.html HTTP/1.1
-		host: localhost
+			GET /another.html HTTP/1.1
+			host: localhost
 
-		""";
+			""";
 	private static final String INDEX_HTML = """
-		<html>
-			<head>
-				<title>Hello, world!</title>
-			</head>
-			<body>
-				Hello, world!
-			</body>
-		</html>
-		""";
+			<html>
+				<head>
+					<title>Hello, world!</title>
+				</head>
+				<body>
+					Hello, world!
+				</body>
+			</html>
+			""";
 	private static final String ANOTHER_HTML = """
-		<html>
-			<head>
-				<title>Another file</title>
-			</head>
-			<body>
-				Hello, another world!
-			</body>
-		</html>
-		""";
+			<html>
+				<head>
+					<title>Another file</title>
+				</head>
+				<body>
+					Hello, another world!
+				</body>
+			</html>
+			""";
 	private static final String STATUS_LINE_200 = "HTTP/1.1 200 OK";
 	private static final String HEADER = "Content-Type: text/html; charset=utf-8";
 	private static final String EXPECT_ROOT = STATUS_LINE_200 + "\n" + HEADER + "\n\n" + INDEX_HTML;
 	private static final String EXPECT_ANOTHER = STATUS_LINE_200 + "\n" + HEADER + "\n\n" + ANOTHER_HTML;
 	private static final String DOCUMENT_ROOT = "/Users/pc220206/Documents/engineer_training/http/server/http_server/html/";
 
-
-	class StubFileLoader implements FileLoader{
+	class StubFileLoader implements FileLoader {
 
 		@Override
-		public InputStream open(String path) throws FileNotFoundException{
+		public InputStream open(String path) throws FileNotFoundException {
 			if (path.equals("/")) {
 				return new ByteArrayInputStream(INDEX_HTML.getBytes());
 			}
@@ -88,7 +93,7 @@ class HttpServerTest {
 		OutputStream out = new ByteArrayOutputStream();
 
 		FileLoader fileLoader = new StubFileLoader();
-		
+
 		Runnable webserver = new WebServer(in, out, fileLoader);
 		webserver.run();
 
@@ -101,7 +106,7 @@ class HttpServerTest {
 		OutputStream out = new ByteArrayOutputStream();
 
 		FileLoader fileLoader = new StubFileLoader();
-		
+
 		Runnable webserver = new WebServer(in, out, fileLoader);
 		webserver.run();
 
@@ -114,7 +119,7 @@ class HttpServerTest {
 		OutputStream out = new ByteArrayOutputStream();
 
 		FileLoader fileLoader = new DiskFileLoader(DOCUMENT_ROOT);
-		
+
 		Runnable webserver = new WebServer(in, out, fileLoader);
 		webserver.run();
 
@@ -160,14 +165,14 @@ class HttpServerTest {
 
 		private HttpRequest createRequest(String location) {
 			return HttpRequest.newBuilder()
-				.uri(URI.create("http://127.0.0.1:8080/" + location))
-				.build();
+					.uri(URI.create("http://127.0.0.1:8080/" + location))
+					.build();
 		}
-		
+
 		private HttpClient createClient() {
 			return HttpClient.newBuilder()
-			.version(Version.HTTP_1_1)
-			.build();
+					.version(Version.HTTP_1_1)
+					.build();
 		}
 
 		@Test
@@ -178,7 +183,7 @@ class HttpServerTest {
 			assertEquals(res.statusCode(), 200);
 			assertEquals(res.body(), INDEX_HTML);
 		}
-		
+
 		@Test
 		public void testAnotherPath() {
 			HttpRequest request = createRequest("/another.html");
@@ -202,6 +207,18 @@ class HttpServerTest {
 
 			assertEquals(anoterResponse.statusCode(), 200);
 			assertEquals(anoterResponse.body(), ANOTHER_HTML);
+		}
+
+		@Test
+		public void testKeepAlive() {
+			try (Socket socket = new Socket("localhost", 8080);
+					BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+					BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));) {
+				new StringReader(INDEX_HTML).transferTo(writer);
+				new StringReader(ANOTHER_HTML).transferTo(writer);
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			}
 		}
 	}
 }
