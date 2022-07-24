@@ -3,8 +3,11 @@ package hariboten;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -21,6 +24,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpClient.Version;
 import java.net.http.HttpResponse.BodyHandlers;
+
+import javax.management.RuntimeErrorException;
 
 class HttpServerTest {
 	private static final String REQUEST_ROOT = """
@@ -128,55 +133,75 @@ class HttpServerTest {
 		assertEquals("index.html", endWithSlash.getName());
 	}
 
-	static class OnTcpTest {
+	@Nested
+	class OnTcpTest {
+		HttpServer httpServer = new HttpServer(8080, DOCUMENT_ROOT);
+
 		@BeforeEach
 		public void startServer() {
-			HttpServer httpServer = new HttpServer(8080, DOCUMENT_ROOT);
+			httpServer = new HttpServer(8080, DOCUMENT_ROOT);
 			new Thread(httpServer).start();
+		}
+
+		@AfterEach
+		private void stopServer() {
+			httpServer.stop();
+		}
+
+		private HttpResponse<String> sendRequest(HttpRequest request, HttpClient client) {
+			try {
+				return client.send(request, BodyHandlers.ofString());
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		private HttpRequest createRequest(String location) {
+			return HttpRequest.newBuilder()
+				.uri(URI.create("http://127.0.0.1:8080/" + location))
+				.build();
+		}
+		
+		private HttpClient createClient() {
+			return HttpClient.newBuilder()
+			.version(Version.HTTP_1_1)
+			.build();
 		}
 
 		@Test
 		public void testOnTcp() {
-			HttpRequest request = HttpRequest.newBuilder()
-				.uri(URI.create("http://127.0.0.1:8080"))
-				.build();
-
-			HttpResponse<String> res;
-			try {
-				res = HttpClient.newBuilder()
-				.version(Version.HTTP_1_1)
-				.build()
-				.send(request, BodyHandlers.ofString());
-			} catch (IOException e) {
-				throw new UncheckedIOException(e);
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
-			}
+			HttpRequest request = createRequest("");
+			HttpResponse<String> res = this.sendRequest(request, createClient());
 
 			assertEquals(res.statusCode(), 200);
 			assertEquals(res.body(), INDEX_HTML);
 		}
-
+		
 		@Test
 		public void testAnotherPath() {
-			HttpRequest request = HttpRequest.newBuilder()
-				.uri(URI.create("http://127.0.0.1:8080/another.html"))
-				.build();
-
-			HttpResponse<String> res;
-			try {
-				res = HttpClient.newBuilder()
-				.version(Version.HTTP_1_1)
-				.build()
-				.send(request, BodyHandlers.ofString());
-			} catch (IOException e) {
-				throw new UncheckedIOException(e);
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
-			}
+			HttpRequest request = createRequest("/another.html");
+			HttpResponse<String> res = this.sendRequest(request, createClient());
 
 			assertEquals(res.statusCode(), 200);
 			assertEquals(res.body(), ANOTHER_HTML);
+		}
+
+		@Test
+		public void testDoubleRequest() {
+			HttpClient client = createClient();
+			HttpRequest request = createRequest("");
+			HttpRequest anotherRequest = createRequest("/another.html");
+
+			HttpResponse<String> res = this.sendRequest(request, client);
+			HttpResponse<String> anoterResponse = this.sendRequest(anotherRequest, client);
+
+			assertEquals(res.statusCode(), 200);
+			assertEquals(res.body(), INDEX_HTML);
+
+			assertEquals(anoterResponse.statusCode(), 200);
+			assertEquals(anoterResponse.body(), ANOTHER_HTML);
 		}
 	}
 }
