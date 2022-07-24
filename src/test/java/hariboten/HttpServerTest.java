@@ -3,12 +3,14 @@ package hariboten;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import org.junit.jupiter.api.Test;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.junit.jupiter.api.Test;
+import hariboten.WebServer;
 
 class HttpServerTest {
 	@Test
@@ -33,7 +35,7 @@ class HttpServerTest {
 		InputStream in = new ByteArrayInputStream(request.getBytes());
 		OutputStream out = new ByteArrayOutputStream();
 		
-		Runnable webserver = new WebServer();
+		Runnable webserver = new WebServer(in, out);
 		webserver.run();
 
 		assertEquals(expect, out.toString());
