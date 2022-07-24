@@ -1,6 +1,5 @@
 package hariboten;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Disabled;
@@ -44,17 +43,6 @@ class HttpServerTest {
 		FileLoader fileLoader = new StubFileLoader();
 		
 		Runnable webserver = new WebServer(in, out, fileLoader);
-		webserver.run();
-
-		assertEquals(EXPECT_ROOT, out.toString());
-	}
-
-	@Test
-	public void testHttpRequest() {
-		InputStream in = new ByteArrayInputStream(REQUEST_ROOT.getBytes());
-		OutputStream out = new ByteArrayOutputStream();
-		
-		Runnable webserver = new WebServer(in, out);
 		webserver.run();
 
 		assertEquals(EXPECT_ROOT, out.toString());
