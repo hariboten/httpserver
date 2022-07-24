@@ -1,18 +1,20 @@
 package hariboten;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-
-import sun.tools.jar.resources.jar;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -22,12 +24,12 @@ import java.net.http.HttpResponse.BodyHandlers;
 
 class HttpServerTest {
 	private static final String REQUEST_ROOT = """
-		GET / http/1.1
+		GET / HTTP/1.1
 		host: localhost
 
 		""";
 	private static final String REQUEST_ANOTHER = """
-		GET /another.html http/1.1
+		GET /another.html HTTP/1.1
 		host: localhost
 
 		""";
@@ -51,9 +53,10 @@ class HttpServerTest {
 			</body>
 		</html>
 		""";
-	private static final String STATUS_LINE_200 = "http/1.1 200 OK";
-	private static final String EXPECT_ROOT = STATUS_LINE_200 + "\n\n" + INDEX_HTML;
-	private static final String EXPECT_ANOTHER = STATUS_LINE_200 + "\n\n" + ANOTHER_HTML;
+	private static final String STATUS_LINE_200 = "HTTP/1.1 200 OK";
+	private static final String HEADER = "Content-Type: text/html; charset=utf-8";
+	private static final String EXPECT_ROOT = STATUS_LINE_200 + "\n" + HEADER + "\n\n" + INDEX_HTML;
+	private static final String EXPECT_ANOTHER = STATUS_LINE_200 + "\n" + HEADER + "\n\n" + ANOTHER_HTML;
 	private static final String DOCUMENT_ROOT = "/Users/pc220206/Documents/engineer_training/http/server/http_server/html/";
 
 
@@ -125,20 +128,55 @@ class HttpServerTest {
 		assertEquals("index.html", endWithSlash.getName());
 	}
 
-	@Test
-	public void testOnTcp() {
-		HttpServer httpServer = new HttpServer();
-		Thread httpServerThread = new Thread(httpServer);
-		HttpRequest request = HttpRequest.newBuilder()
-			.uri(URI.create("localhost:8080/"))
-			.build();
-		HttpResponse<String> res = 
-			HttpClient.newBuilder()
-			.version(Version.HTTP_1_1)
-			.build()
-			.send(request, BodyHandlers.ofString());
-		assertEquals(res.statusCode(), 200);
-		assertEquals(res.body(), INDEX_HTML);
+	static class OnTcpTest {
+		@BeforeEach
+		public void startServer() {
+			HttpServer httpServer = new HttpServer(8080, DOCUMENT_ROOT);
+			new Thread(httpServer).start();
+		}
 
+		@Test
+		public void testOnTcp() {
+			HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("http://127.0.0.1:8080"))
+				.build();
+
+			HttpResponse<String> res;
+			try {
+				res = HttpClient.newBuilder()
+				.version(Version.HTTP_1_1)
+				.build()
+				.send(request, BodyHandlers.ofString());
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+
+			assertEquals(res.statusCode(), 200);
+			assertEquals(res.body(), INDEX_HTML);
+		}
+
+		@Test
+		public void testAnotherPath() {
+			HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("http://127.0.0.1:8080/another.html"))
+				.build();
+
+			HttpResponse<String> res;
+			try {
+				res = HttpClient.newBuilder()
+				.version(Version.HTTP_1_1)
+				.build()
+				.send(request, BodyHandlers.ofString());
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+
+			assertEquals(res.statusCode(), 200);
+			assertEquals(res.body(), ANOTHER_HTML);
+		}
 	}
 }

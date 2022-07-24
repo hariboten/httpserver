@@ -10,7 +10,7 @@ public class WebServer implements Runnable {
 	private final InputStream in;
 	private final OutputStream out;
 	private final FileLoader fileLoader;
-	private static final String STATUS_LINE_200 = "http/1.1 200 OK";
+	private static final String STATUS_LINE_200 = "HTTP/1.1 200 OK";
 
 	public WebServer(InputStream in, OutputStream out, FileLoader fileLoader) {
 		this.in = in;
@@ -32,7 +32,7 @@ public class WebServer implements Runnable {
 
 		try {
 			InputStream header = new ByteArrayInputStream(
-					(STATUS_LINE_200 + "\n\n")
+					(STATUS_LINE_200 + "\n" + "Content-Type: text/html; charset=utf-8" + "\n\n")
 					.getBytes());
 			InputStream body = fileLoader.open(path);
 
