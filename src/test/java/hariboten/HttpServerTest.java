@@ -36,7 +36,7 @@ class HttpServerTest {
 	private static final String INDEX_HTML = """
 		<html>
 			<head>
-				<title>Hello, world!<title>
+				<title>Hello, world!</title>
 			</head>
 			<body>
 				Hello, world!
@@ -46,7 +46,7 @@ class HttpServerTest {
 	private static final String ANOTHER_HTML = """
 		<html>
 			<head>
-				<title>Another file<title>
+				<title>Another file</title>
 			</head>
 			<body>
 				Hello, another world!
