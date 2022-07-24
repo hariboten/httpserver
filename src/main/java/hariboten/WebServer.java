@@ -21,17 +21,27 @@ public class WebServer implements Runnable {
 
     @Override
 	public void run() {
+		RequestReciever requestReciever = new RequestReciever(in);
+		String path = null;
+		try {
+			path = requestReciever.recv();
+		} catch (IOException e) {
+			System.err.println(e);
+			return ;
+		}
+
 		try {
 			InputStream header = new ByteArrayInputStream(
 					(STATUS_LINE_200 + "\n\n")
 					.getBytes());
-			InputStream body = fileLoader.open("/");
+			InputStream body = fileLoader.open(path);
 
 			header.transferTo(out);
 			body.transferTo(out);
 			out.close();
 		} catch (IOException e) {
 			System.err.println(e);
+			return ;
 		}
 	}
 }
