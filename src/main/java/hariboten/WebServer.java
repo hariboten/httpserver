@@ -1,13 +1,10 @@
 package hariboten;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 
 public class WebServer implements Runnable {
 	private final InputStream in;
@@ -25,10 +22,13 @@ public class WebServer implements Runnable {
     @Override
 	public void run() {
 		try {
-			new ByteArrayInputStream((STATUS_LINE_200 + "\n\n").getBytes())
-				.transferTo(out);
-			fileLoader.open("/")
-				.transferTo(out);
+			InputStream header = new ByteArrayInputStream(
+					(STATUS_LINE_200 + "\n\n")
+					.getBytes());
+			InputStream body = fileLoader.open("/");
+
+			header.transferTo(out);
+			body.transferTo(out);
 			out.close();
 		} catch (IOException e) {
 			System.err.println(e);
